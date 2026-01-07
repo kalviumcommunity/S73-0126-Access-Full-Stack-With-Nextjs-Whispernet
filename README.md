@@ -18,7 +18,7 @@ Rural schools struggle with low bandwidth. This app demonstrates how Next.js ren
 * **Benefit:** Reduces server load by 99% compared to SSR, while keeping content relatively fresh.
 
 ## Build Evidence
-[Insert Screenshot of your `npm run build` terminal output here]
+Insert Screenshot of your `npm run build` terminal output here
 
 ## Reflection
 If this app scaled to 10x users, I would move the **Teacher Dashboard** from pure SSR to Client-Side Fetching (SWR/TanStack Query) or aggressive caching to prevent the server from crashing under load.
