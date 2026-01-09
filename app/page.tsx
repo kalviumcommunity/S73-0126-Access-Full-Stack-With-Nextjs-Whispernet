@@ -1,8 +1,5 @@
 import Link from "next/link";
 
-const x = 5;
-console.log("hello");
-
 export default function Home() {
   return (
     <main className="min-h-screen p-10 flex flex-col items-start gap-6 bg-white text-black">
