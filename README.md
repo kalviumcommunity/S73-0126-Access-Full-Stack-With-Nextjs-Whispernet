@@ -22,3 +22,4 @@ Rural schools struggle with low bandwidth. This app demonstrates how Next.js ren
 
 ## Reflection
 If this app scaled to 10x users, I would move the **Teacher Dashboard** from pure SSR to Client-Side Fetching (SWR/TanStack Query) or aggressive caching to prevent the server from crashing under load.
+
