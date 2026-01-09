@@ -1,0 +1,36 @@
+name: Rural Portal CI/CD
+
+on:
+  push:
+    branches: [ "main", "concept-2" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Lint Code
+      run: npm run lint
+      # This checks for code errors (like unused variables)
+
+    - name: Build Application
+      run: npm run build
+      # This ensures the app actually builds without crashing
+      
+    - name: Build Docker Image
+      run: docker build . --file Dockerfile --tag rural-portal:latest
+      # This confirms your Dockerfile is valid
