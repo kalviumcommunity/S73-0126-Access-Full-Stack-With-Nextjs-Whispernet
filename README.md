@@ -37,6 +37,27 @@ We enabled `strict: true`, `noImplicitAny`, and `noUnusedLocals`.
 We use `lint-staged` to run checks before every commit.
 * **Workflow:** If a developer tries to commit code with errors, the commit is blocked automatically.
 
+# 🔐 Environment Variable Management
+
+To ensure security, this project separates server secrets from client configuration.
+
+## Setup Instructions
+1. Copy the example file: `cp .env.example .env.local`
+2. Fill in the real values in `.env.local`.
+
+## Variable Reference
+
+| Variable | Scope | Purpose |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | **Server Only** | Connection string for PostgreSQL. Never exposed to browser. |
+| `API_SECRET_KEY` | **Server Only** | Private key for backend services. |
+| `NEXT_PUBLIC_APP_NAME` | **Client & Server** | The public display name of the app. |
+| `NEXT_PUBLIC_API_BASE_URL` | **Client & Server** | Base URL for fetching data. |
+
+## Security Measures
+* **.gitignore:** Configured to ignore `.env.local` so secrets are never pushed to GitHub.
+* **Prefixing:** Only variables starting with `NEXT_PUBLIC_` are bundled to the client.
+
 ## Reflection
 If this app scaled to 10x users, I would move the **Teacher Dashboard** from pure SSR to Client-Side Fetching (SWR/TanStack Query) or aggressive caching to prevent the server from crashing under load.
 
