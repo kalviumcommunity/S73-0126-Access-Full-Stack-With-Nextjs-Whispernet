@@ -9,22 +9,22 @@ export default function Home() {
       </p>
 
       <div className="flex flex-wrap gap-4">
-        <Link 
-          href="/textbooks" 
+        <Link
+          href="/textbooks"
           className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition"
         >
           📚 Textbooks (Static)
         </Link>
-        
-        <Link 
-          href="/dashboard" 
+
+        <Link
+          href="/dashboard"
           className="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition"
         >
           🎓 Teacher Dashboard (SSR)
         </Link>
 
-        <Link 
-          href="/notices" 
+        <Link
+          href="/notices"
           className="bg-yellow-500 text-black px-6 py-3 rounded hover:bg-yellow-600 transition"
         >
           📢 Notices (ISR)
