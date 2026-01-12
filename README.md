@@ -86,4 +86,29 @@ For a production deployment to AWS, I would use **AWS App Runner** or **ECS (Ela
 
 ## Evidence
 [Insert Screenshot of your Terminal running the Docker Container]  
-[Insert Screenshot of the "Green" GitHub Actions run]
+[Insert Screenshot of the "Green" GitHub Actions run]   
+
+# 🐳 Docker & Compose Setup
+
+I have containerized the entire application stack to ensure consistency across development environments.
+
+## Services Configured
+1.  **App (`rural-portal-app`):** The Next.js application built using a multi-stage Dockerfile.
+2.  **Database (`rural-postgres-db`):** PostgreSQL 15 running on port 5432.
+3.  **Cache (`rural-redis-cache`):** Redis 7 running on port 6379.
+
+## Networking
+All services share a custom bridge network called `rural_network`.
+* The app connects to the DB via the hostname: `db`
+* The app connects to Redis via the hostname: `redis`
+
+## How to Run
+1.  Ensure Docker Desktop is running.
+2.  Run the command:
+    ```bash
+    docker-compose up --build
+    ```
+3.  Access the app at `http://localhost:3000`.
+
+## Evidence
+![Docker containers](image.png)
