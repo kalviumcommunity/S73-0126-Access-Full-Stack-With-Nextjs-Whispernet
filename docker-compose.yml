@@ -1,0 +1,58 @@
+# version: '3.8'
+
+services:
+  # 1. The Next.js Application
+  app:
+    container_name: rural-portal-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # CRITICAL: We use the service name 'db' and 'redis' as the hostname, not 'localhost'
+      - DATABASE_URL=postgres://postgres:password@db:5432/rural_school_db
+      - REDIS_URL=redis://redis:6379
+      - NEXT_PUBLIC_API_URL=http://localhost:3000/api
+      - NODE_ENV=production
+    depends_on:
+      - db
+      - redis
+    networks:
+      - rural_network
+
+  # 2. PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: rural-postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: rural_school_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - rural_network
+
+  # 3. Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: rural-redis-cache
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - rural_network
+
+# Define Shared Network
+networks:
+  rural_network:
+    driver: bridge
+
+# Define Persistent Storage for DB
+volumes:
+  db_data:
