@@ -43,9 +43,11 @@ yarn-error.log*
 next-env.d.ts
 
 .env
+.env.example
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
 .env.staging 
 !.env.example
+/app/generated/prisma

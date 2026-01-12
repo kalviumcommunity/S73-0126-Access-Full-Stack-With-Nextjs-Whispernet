@@ -1,0 +1,57 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. User: Teachers and Admins
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  role      String   @default("TEACHER") // TEACHER or ADMIN
+  createdAt DateTime @default(now())
+
+  // Relationships
+  // (Add if teachers manage specific classes later)
+}
+
+// 2. Student: The core entity
+model Student {
+  id        Int      @id @default(autoincrement())
+  name      String
+  grade     Int      // e.g., 5, 6, 7
+  section   String?  // e.g., "A", "B"
+  
+  // Relationships
+  attendance Attendance[]
+
+  @@index([grade]) // Index for faster searching by grade
+}
+
+// 3. Attendance: Tracks daily status (1-to-Many with Student)
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @default(now())
+  status    String   // PRESENT, ABSENT, LATE
+  
+  // Foreign Key
+  studentId Int
+  student   Student  @relation(fields: [studentId], references: [id])
+
+  @@index([date]) // Index for querying "today's attendance"
+}
+
+// 4. Notice: School announcements (For the ISR page)
+model Notice {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  isActive  Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}
