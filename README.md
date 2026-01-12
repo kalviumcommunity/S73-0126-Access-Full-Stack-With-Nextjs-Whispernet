@@ -112,3 +112,22 @@ All services share a custom bridge network called `rural_network`.
 
 ## Evidence
 ![Docker containers](image.png)
+
+# 🗄️ Database Schema & Design
+
+I designed a normalized PostgreSQL schema using Prisma to ensure data integrity and scalability.
+
+## Entity Relationship Diagram (ERD)
+* **User:** Manages authentication (Teachers/Admins).
+* **Student:** Core entity containing grade/section info.
+* **Attendance:** Linked to Student (1-to-Many). Tracks daily status.
+* **Notice:** Standalone entity for school announcements.
+
+## Scalability Decisions
+1.  **Normalization:** Separated `Attendance` into its own table to prevent the `Student` table from bloating with daily records.
+2.  **Indexing:** Added an index on `Student(grade)` and `Attendance(date)` to make filtering by class or date instant, even with millions of records.
+3.  **Constraints:** `User.email` is marked `@unique` to prevent duplicate accounts.
+
+## Evidence
+![alt text](image-2.png)
+![alt text](image-1.png)
