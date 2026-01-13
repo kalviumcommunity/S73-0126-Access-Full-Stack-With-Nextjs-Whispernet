@@ -130,4 +130,36 @@ I designed a normalized PostgreSQL schema using Prisma to ensure data integrity 
 
 ## Evidence
 ![alt text](image-2.png)
-![alt text](image-1.png)
+![alt text](image-1.png) 
+
+# 🔌 Prisma ORM Setup
+
+I have integrated Prisma ORM to manage database communication type-safely.
+
+## Singleton Pattern
+To prevent connection exhaustion in Next.js development (hot-reloading), I implemented a singleton instance in `lib/prisma.ts`.
+
+## Setup Steps
+1.  **Init:** `npx prisma init` (Created schema and .env)
+2.  **Generate:** `npx prisma generate` (Created the TypeScript client)
+3.  **Singleton:** Created `lib/prisma.ts` to reuse the active connection.
+
+## Evidence
+![alt text](image-3.png)
+![alt text](image-4.png)
+
+# 🔄 Database Migrations & Seeding
+
+We use Prisma Migrations to version-control our database schema.
+
+## Workflow
+1.  **Modify Schema:** Edit `prisma/schema.prisma`.
+2.  **Create Migration:** `npx prisma migrate dev --name <descriptive_name>`
+3.  **Reset (Dev Only):** `npx prisma migrate reset` (Drops DB, re-applies migrations, runs seed).
+
+## Seed Script
+The seed script (`prisma/seed.ts`) is **idempotent**. It clears `Attendance` and `Student` tables before running, ensuring no duplicate data errors during development.
+
+## Evidence
+![alt text](image-5.png)
+![alt text](image-6.png)
