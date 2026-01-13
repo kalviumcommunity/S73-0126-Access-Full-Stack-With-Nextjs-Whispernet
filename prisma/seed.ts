@@ -1,53 +1,63 @@
+// prisma/seed.ts
 import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
 
 async function main() {
-  // 1. Create a Teacher
-  // FIX: Removed 'const teacher =' to satisfy strict TypeScript rules
+  console.log("🗑️  Cleaning database...");
+  // Delete data in the correct order (Child first, then Parent) to avoid Foreign Key errors
+  await prisma.attendance.deleteMany();
+  await prisma.student.deleteMany();
+  await prisma.notice.deleteMany();
+  // We don't delete Users usually, or we use upsert (below)
+
+  console.log("🌱 Seeding database...");
+
+  // 1. Create/Update Teacher (Idempotent via upsert)
   await prisma.user.upsert({
     where: { email: "teacher@rural.edu" },
-    update: {},
+    update: { phone: "9876543210" }, // Update phone if exists
     create: {
       email: "teacher@rural.edu",
       name: "Ms. Alice",
       role: "TEACHER",
+      phone: "9876543210", // Set phone for new
     },
   });
 
   // 2. Create Students
-  const s1 = await prisma.student.create({
-    data: { name: "Rohan Kumar", grade: 5, section: "A" },
-  });
-  const s2 = await prisma.student.create({
-    data: { name: "Priya Sharma", grade: 5, section: "A" },
-  });
-
-  // 3. Mark Attendance
-  // We use s1 and s2 here, so keeping them as variables is fine!
-  await prisma.attendance.createMany({
+  // Since we deleted them at the top, we can use createMany safely
+  await prisma.student.createMany({
     data: [
-      { studentId: s1.id, status: "PRESENT" },
-      { studentId: s2.id, status: "ABSENT" },
+      { name: "Rohan Kumar", grade: 5, section: "A" },
+      { name: "Priya Sharma", grade: 5, section: "A" },
+      { name: "Amit Singh", grade: 6, section: "B" },
     ],
   });
 
-  // 4. Create Notices
-  await prisma.notice.create({
-    data: {
-      title: "Holiday Tomorrow",
-      content: "School will be closed due to heavy rain.",
-    },
+  // Fetch them back to get their IDs for attendance
+  const students = await prisma.student.findMany();
+
+  // 3. Mark Attendance (Linked to real IDs)
+  // We can just loop through the fetched students
+  const attendanceData = students.map((s) => ({
+    studentId: s.id,
+    status: "PRESENT" as const, // Force TypeScript to recognize the Enum
+    date: new Date(),
+  }));
+
+  await prisma.attendance.createMany({
+    data: attendanceData,
   });
 
-  console.log("🌱 Database seeded successfully!");
+  console.log("✅ Database seeded successfully!");
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
+  .catch((e) => {
     console.error(e);
-    await prisma.$disconnect();
     process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
   });
