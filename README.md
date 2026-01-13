@@ -187,3 +187,27 @@ I used `prisma.$transaction` to ensure Atomicity.
 ## Evidence
 ![alt text](image-7.png)
 ![alt text](image-8.png)
+
+# 🌐 API Structure
+
+I designed a RESTful API using Next.js file-based routing.
+
+## Endpoints
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/students` | Fetch all students (Supports `?page=` & `?limit=`) |
+| `POST` | `/api/students` | Register a new student |
+| `GET` | `/api/students/:id` | Fetch details of a specific student |
+| `PATCH` | `/api/students/:id` | Update student details |
+| `DELETE` | `/api/students/:id` | Remove a student |
+
+## Example Response (Pagination)
+```json
+{
+  "data": [ ... ],
+  "meta": {
+    "total": 5,
+    "page": 1,
+    "limit": 10
+  }
+}
