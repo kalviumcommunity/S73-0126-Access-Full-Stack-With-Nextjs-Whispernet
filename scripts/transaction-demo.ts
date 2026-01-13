@@ -44,7 +44,11 @@ async function main() {
     console.error("   Reason:", (error as Error).message);
 
     // Prove Rollback: Check if the student was created
-    const check = await prisma.user.findFirst({ where: { email } });
+    // Prove Rollback: Check if the student was created in the STUDENT table
+    // We search by the name we used in the transaction above ('Transaction Test User')
+    const check = await prisma.student.findFirst({
+      where: { name: "Transaction Test User" },
+    });
     console.log("   Rollback Verification: Student exists in DB?", !!check);
   }
 }
