@@ -20,6 +20,8 @@ model User {
 
   // Relationships
   // (Add if teachers manage specific classes later)
+
+  @@index([role]) // Index for faster searching by role
 }
 
 // 2. Student: The core entity
@@ -46,6 +48,9 @@ model Attendance {
   student   Student  @relation(fields: [studentId], references: [id])
 
   @@index([date]) // Index for querying "today's attendance"
+
+  // ADD THIS INDEX (Composite index for common query: "Who was absent on Date X?")
+  @@index([status, date])
 }
 
 // 4. Notice: School announcements (For the ISR page)

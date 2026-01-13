@@ -163,3 +163,27 @@ The seed script (`prisma/seed.ts`) is **idempotent**. It clears `Attendance` and
 ## Evidence
 ![alt text](image-5.png)
 ![alt text](image-6.png)
+
+# ⚡ Database Performance & Optimization
+
+I implemented transactions for data integrity and indexes for query speed.
+
+## 1. Transactions
+I used `prisma.$transaction` to ensure Atomicity.
+* **Scenario:** Registering a student and marking initial attendance.
+* **Rollback:** If attendance marking fails, the student creation is reverted.
+
+## 2. Optimization Strategy
+* **Indexes:** Added `@@index([role])` to Users and `@@index([status, date])` to Attendance.
+* **Projection:** Used `.select` to fetch only necessary fields.
+* **Pagination:** Used `.take(10)` to prevent fetching the whole table.
+
+## 3. Benchmarking
+| Query Type | Execution Time | Notes |
+| :--- | :--- | :--- |
+| `findMany()` (All fields) | ~15ms | Fetches unnecessary data |
+| `findMany({ select, take })` | ~2ms | Optimized payload size |
+
+## Evidence
+![alt text](image-7.png)
+![alt text](image-8.png)
