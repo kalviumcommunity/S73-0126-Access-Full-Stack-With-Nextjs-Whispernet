@@ -211,6 +211,7 @@ I designed a RESTful API using Next.js file-based routing.
     "limit": 10
   }
 }
+```
 
 # 🛡️ Global API Response Handler
 
@@ -230,3 +231,28 @@ Every API response (Success or Error) follows this structure:
   },
   "timestamp": string
 }
+```
+
+# 🛡️ Zod Input Validation
+
+I integrated **Zod** to validate all incoming API requests.
+
+## Schema (`lib/schemas/studentSchema.ts`)
+* **Name:** Min 2 chars, Max 50.
+* **Grade:** Int between 1-12.
+* **Section:** Optional, 1 char max.
+
+## Error Handling
+If validation fails, the API returns a `400 Bad Request` with a detailed list of what went wrong, wrapped in our Global Response Handler.
+
+```json
+// Example Validation Error
+{
+  "success": false,
+  "message": "Validation failed",
+  "error": {
+    "code": "VAL_001",
+    "details": [ { "field": "grade", "message": "Grade cannot be higher than 12" } ]
+  }
+}
+```

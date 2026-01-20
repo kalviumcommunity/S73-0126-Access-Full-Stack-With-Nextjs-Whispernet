@@ -2,6 +2,8 @@
 import { sendSuccess, sendError } from "@/lib/responseHandler";
 import { ERROR_CODES } from "@/lib/errorCodes";
 import { prisma } from "@/lib/prisma";
+import { studentSchema } from "@/lib/schemas/studentSchema";
+import { ZodError } from "zod";
 
 // Helper to validate ID
 function parseId(params: { id: string }) {
@@ -48,18 +50,34 @@ export async function PATCH(
   try {
     const body = await request.json();
 
+    // Use .partial() to allow updating single fields
+    const validatedData = studentSchema.partial().parse(body);
+
     const updatedStudent = await prisma.student.update({
       where: { id: studentId },
-      data: body,
+      data: validatedData,
     });
 
     return sendSuccess(updatedStudent, "Student updated successfully");
   } catch (error) {
+    if (error instanceof ZodError) {
+      const formattedErrors = error.errors.map((e) => ({
+        field: e.path[0],
+        message: e.message,
+      }));
+      return sendError(
+        "Validation failed",
+        ERROR_CODES.VALIDATION_ERROR,
+        400,
+        formattedErrors
+      );
+    }
+
     return sendError(
       "Failed to update student",
       ERROR_CODES.DB_ERROR,
       500,
-      error instanceof Error ? error.message : error
+      error instanceof Error ? error.message : "Unknown error"
     );
   }
 }
@@ -87,7 +105,7 @@ export async function DELETE(
       "Failed to delete student",
       ERROR_CODES.DB_ERROR,
       500,
-      error instanceof Error ? error.message : error
+      error instanceof Error ? error.message : "Unknown error"
     );
   }
 }
