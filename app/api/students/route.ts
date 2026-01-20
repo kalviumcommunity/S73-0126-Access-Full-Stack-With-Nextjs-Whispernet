@@ -2,6 +2,7 @@
 import { sendSuccess, sendError } from "@/lib/responseHandler";
 import { ERROR_CODES } from "@/lib/errorCodes";
 import { prisma } from "@/lib/prisma";
+import { studentSchema } from "@/lib/schemas/studentSchema";
 
 export async function GET(request: Request) {
   try {
@@ -40,20 +41,31 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    if (!body.name || !body.grade) {
-      // STANDARDIZED ERROR
+    // 1. VALIDATION LAYER (Zod) - Using safeParse for better error handling
+    const result = studentSchema.safeParse(body);
+
+    if (!result.success) {
+      // Format Zod errors into a readable list
+      const formattedErrors = result.error.errors.map((e) => ({
+        field: e.path[0],
+        message: e.message,
+      }));
+
       return sendError(
-        "Name and Grade are required",
+        "Validation failed",
         ERROR_CODES.VALIDATION_ERROR,
-        400
+        400,
+        formattedErrors
       );
     }
 
+    // 2. DATABASE LAYER (Prisma)
+    // We use 'result.data' here, which is the validated data
     const newStudent = await prisma.student.create({
       data: {
-        name: body.name,
-        grade: body.grade,
-        section: body.section || "A",
+        name: result.data.name,
+        grade: result.data.grade,
+        section: result.data.section || "A",
       },
     });
 
