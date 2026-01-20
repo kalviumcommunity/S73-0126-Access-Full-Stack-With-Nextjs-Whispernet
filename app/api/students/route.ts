@@ -1,53 +1,51 @@
 // app/api/students/route.ts
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; // Import our singleton client
+import { sendSuccess, sendError } from "@/lib/responseHandler";
+import { ERROR_CODES } from "@/lib/errorCodes";
+import { prisma } from "@/lib/prisma";
 
-// 1. GET: Fetch all students (with Pagination)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-
-    // Pagination Logic
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    // Fetch Data
     const students = await prisma.student.findMany({
-      skip: skip,
+      skip,
       take: limit,
-      orderBy: { id: "asc" }, // Consistent ordering
+      orderBy: { id: "asc" },
     });
 
     const total = await prisma.student.count();
 
-    return NextResponse.json({
-      data: students,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+    // WRAPPED RESPONSE
+    return sendSuccess(
+      {
+        students,
+        meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
       },
-    });
+      "Students fetched successfully"
+    );
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch students" },
-      { status: 500 }
+    return sendError(
+      "Failed to fetch students",
+      ERROR_CODES.DB_ERROR,
+      500,
+      error instanceof Error ? error.message : error
     );
   }
 }
 
-// 2. POST: Create a new student
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Basic Validation
     if (!body.name || !body.grade) {
-      return NextResponse.json(
-        { error: "Name and Grade are required" },
-        { status: 400 }
+      // STANDARDIZED ERROR
+      return sendError(
+        "Name and Grade are required",
+        ERROR_CODES.VALIDATION_ERROR,
+        400
       );
     }
 
@@ -59,11 +57,13 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(newStudent, { status: 201 });
+    return sendSuccess(newStudent, "Student created successfully", 201);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to create student" },
-      { status: 500 }
+    return sendError(
+      "Failed to create student",
+      ERROR_CODES.DB_ERROR,
+      500,
+      error instanceof Error ? error.message : "Unknown error"
     );
   }
 }

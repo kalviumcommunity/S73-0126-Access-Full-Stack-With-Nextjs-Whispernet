@@ -1,5 +1,6 @@
 // app/api/students/[id]/route.ts
-import { NextResponse } from "next/server";
+import { sendSuccess, sendError } from "@/lib/responseHandler";
+import { ERROR_CODES } from "@/lib/errorCodes";
 import { prisma } from "@/lib/prisma";
 
 // Helper to validate ID
@@ -16,8 +17,8 @@ export async function GET(
   const { id } = await params;
   const studentId = parseId({ id });
 
-  if (!studentId) {
-    return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+  if (studentId === null) {
+    return sendError("Invalid ID format", ERROR_CODES.VALIDATION_ERROR, 400);
   }
 
   const student = await prisma.student.findUnique({
@@ -26,10 +27,10 @@ export async function GET(
   });
 
   if (!student) {
-    return NextResponse.json({ error: "Student not found" }, { status: 404 });
+    return sendError("Student not found", ERROR_CODES.NOT_FOUND, 404);
   }
 
-  return NextResponse.json(student);
+  return sendSuccess(student, "Student details fetched successfully");
 }
 
 // 2. PATCH: Update Student details
@@ -39,8 +40,10 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const studentId = parseId({ id });
-  if (!studentId)
-    return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+
+  if (studentId === null) {
+    return sendError("Invalid ID format", ERROR_CODES.VALIDATION_ERROR, 400);
+  }
 
   try {
     const body = await request.json();
@@ -50,9 +53,14 @@ export async function PATCH(
       data: body,
     });
 
-    return NextResponse.json(updatedStudent);
+    return sendSuccess(updatedStudent, "Student updated successfully");
   } catch (error) {
-    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+    return sendError(
+      "Failed to update student",
+      ERROR_CODES.DB_ERROR,
+      500,
+      error instanceof Error ? error.message : error
+    );
   }
 }
 
@@ -63,16 +71,23 @@ export async function DELETE(
 ) {
   const { id } = await params;
   const studentId = parseId({ id });
-  if (!studentId)
-    return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+
+  if (studentId === null) {
+    return sendError("Invalid ID format", ERROR_CODES.VALIDATION_ERROR, 400);
+  }
 
   try {
     await prisma.student.delete({
       where: { id: studentId },
     });
 
-    return NextResponse.json({ message: "Student deleted successfully" });
+    return sendSuccess(null, "Student deleted successfully");
   } catch (error) {
-    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+    return sendError(
+      "Failed to delete student",
+      ERROR_CODES.DB_ERROR,
+      500,
+      error instanceof Error ? error.message : error
+    );
   }
 }

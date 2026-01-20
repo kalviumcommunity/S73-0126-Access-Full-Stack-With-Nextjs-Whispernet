@@ -211,3 +211,22 @@ I designed a RESTful API using Next.js file-based routing.
     "limit": 10
   }
 }
+
+# 🛡️ Global API Response Handler
+
+I implemented a centralized response handler to ensure all API endpoints return data in a predictable format.
+
+## The Standard Envelope
+Every API response (Success or Error) follows this structure:
+
+```json
+{
+  "success": boolean,
+  "message": string,
+  "data": any,       // Only present on success
+  "error": {         // Only present on error
+    "code": "ERROR_CODE",
+    "details": "..."
+  },
+  "timestamp": string
+}
