@@ -9,14 +9,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Role enum - defined at top level
+enum Role {
+  TEACHER
+  STUDENT
+  ADMIN
+}
+
 // 1. User: Teachers and Admins
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   name      String?
   password  String
-  phone     String?  
-  role      String   @default("TEACHER") // TEACHER or ADMIN
+  phone     String?
+  role      Role     @default(TEACHER)
   createdAt DateTime @default(now())
 
   // Relationships
