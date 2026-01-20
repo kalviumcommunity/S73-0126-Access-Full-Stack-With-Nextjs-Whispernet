@@ -1,14 +1,25 @@
-// app/api/profile/route.ts
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { sendSuccess, sendError } from "@/lib/responseHandler";
 import { ERROR_CODES } from "@/lib/errorCodes";
 
-const JWT_SECRET = process.env.JWT_SECRET || "secret";
+// FIX: Remove fallback
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function GET(req: Request) {
+  // FIX: Runtime check
+  if (!JWT_SECRET) {
+    console.error(
+      "CRITICAL: JWT_SECRET is not defined in environment variables."
+    );
+    return sendError(
+      "Internal server configuration error",
+      ERROR_CODES.INTERNAL_ERROR,
+      500
+    );
+  }
+
   try {
-    // 1. Get the Header
     const authHeader = req.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return sendError(
@@ -18,11 +29,7 @@ export async function GET(req: Request) {
       );
     }
 
-    // 2. Extract Token (Remove "Bearer " prefix)
     const token = authHeader.split(" ")[1];
-
-    // 3. Verify Token
-    // If invalid, jwt.verify throws an error
     const decoded = jwt.verify(token, JWT_SECRET);
 
     return sendSuccess(
@@ -30,6 +37,19 @@ export async function GET(req: Request) {
       "You have accessed a protected route!"
     );
   } catch (error) {
-    return sendError("Invalid or expired token", ERROR_CODES.AUTH_ERROR, 403);
+    // FIX: Distinguish between Auth errors and Server errors
+    if (
+      error instanceof jwt.JsonWebTokenError ||
+      error instanceof jwt.TokenExpiredError
+    ) {
+      return sendError("Invalid or expired token", ERROR_CODES.AUTH_ERROR, 403);
+    }
+
+    console.error("Profile access error:", error);
+    return sendError(
+      "An unexpected error occurred",
+      ERROR_CODES.INTERNAL_ERROR,
+      500
+    );
   }
 }

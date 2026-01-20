@@ -48,11 +48,13 @@ export async function POST(req: Request) {
 
     return sendSuccess(userWithoutPassword, "Signup successful", 201);
   } catch (error) {
+    console.error("Signup failed:", error);
+
     return sendError(
       "Signup failed",
       ERROR_CODES.INTERNAL_ERROR,
-      500,
-      error instanceof Error ? error.message : error
+      500
+      // REMOVED: error.message
     );
   }
 }
