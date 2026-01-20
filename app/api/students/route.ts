@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       "Failed to create student",
       ERROR_CODES.DB_ERROR,
       500,
-      error
+      error instanceof Error ? error.message : "Unknown error"
     );
   }
 }

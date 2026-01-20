@@ -17,7 +17,7 @@ export async function GET(
   const { id } = await params;
   const studentId = parseId({ id });
 
-  if (!studentId) {
+  if (studentId === null) {
     return sendError("Invalid ID format", ERROR_CODES.VALIDATION_ERROR, 400);
   }
 
@@ -41,7 +41,7 @@ export async function PATCH(
   const { id } = await params;
   const studentId = parseId({ id });
 
-  if (!studentId) {
+  if (studentId === null) {
     return sendError("Invalid ID format", ERROR_CODES.VALIDATION_ERROR, 400);
   }
 
@@ -72,7 +72,7 @@ export async function DELETE(
   const { id } = await params;
   const studentId = parseId({ id });
 
-  if (!studentId) {
+  if (studentId === null) {
     return sendError("Invalid ID format", ERROR_CODES.VALIDATION_ERROR, 400);
   }
 
