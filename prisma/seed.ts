@@ -1,5 +1,6 @@
 // prisma/seed.ts
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -35,6 +36,20 @@ async function main() {
       { name: "Amit Singh", grade: 6, section: "B" },
     ],
   });
+
+  const adminPassword = await bcrypt.hash("admin123", 10);
+  await prisma.user.upsert({
+    where: { email: "admin@rural.edu" },
+    update: {},
+    create: {
+      email: "admin@rural.edu",
+      name: "Super Admin",
+      role: "ADMIN",
+      password: adminPassword,
+    },
+  });
+
+  console.log("✅ Admin user seeded");
 
   // Fetch them back to get their IDs for attendance
   const students = await prisma.student.findMany();
