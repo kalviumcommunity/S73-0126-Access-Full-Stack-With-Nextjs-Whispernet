@@ -20,6 +20,7 @@ async function main() {
     create: {
       email: "teacher@rural.edu",
       name: "Ms. Alice",
+      password: "hashed_password_placeholder", // TODO: Use proper hashing in production
       role: "TEACHER",
       phone: "9876543210", // Set phone for new
     },
