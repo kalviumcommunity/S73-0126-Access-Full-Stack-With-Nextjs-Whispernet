@@ -4,8 +4,6 @@ import { prisma } from "../lib/prisma";
 async function main() {
   console.log("\n--- 🔄 STARTING TRANSACTION DEMO ---\n");
 
-  const email = `student-${Date.now()}@rural.edu`;
-
   try {
     // We use an Interactive Transaction
     const result = await prisma.$transaction(async (tx) => {

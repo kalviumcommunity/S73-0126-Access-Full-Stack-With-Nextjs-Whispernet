@@ -1,5 +1,4 @@
 // app/api/auth/signup/route.ts
-import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
 import { sendSuccess, sendError } from "@/lib/responseHandler";
@@ -44,7 +43,8 @@ export async function POST(req: Request) {
     });
 
     // Remove password from response for security
-    const { password: _, ...userWithoutPassword } = newUser;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _password, ...userWithoutPassword } = newUser;
 
     return sendSuccess(userWithoutPassword, "Signup successful", 201);
   } catch (error) {

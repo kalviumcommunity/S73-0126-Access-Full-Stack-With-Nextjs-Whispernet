@@ -13,7 +13,7 @@ function parseId(params: { id: string }) {
 
 // 1. GET: Fetch Single Student
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> } // Params are promises in Next.js 15
 ) {
   const { id } = await params;
@@ -61,7 +61,7 @@ export async function PATCH(
     return sendSuccess(updatedStudent, "Student updated successfully");
   } catch (error) {
     if (error instanceof ZodError) {
-      const formattedErrors = error.errors.map((e) => ({
+      const formattedErrors = error.issues.map((e) => ({
         field: e.path[0],
         message: e.message,
       }));
@@ -84,7 +84,7 @@ export async function PATCH(
 
 // 3. DELETE: Remove Student
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;

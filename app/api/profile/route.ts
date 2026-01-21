@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { sendSuccess, sendError } from "@/lib/responseHandler";
 import { ERROR_CODES } from "@/lib/errorCodes";
