@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
 import { sendSuccess, sendError } from "@/lib/responseHandler";
 import { ERROR_CODES } from "@/lib/errorCodes";
+import redis from "@/lib/redis";
 
 export async function POST(req: Request) {
   try {
@@ -41,6 +42,11 @@ export async function POST(req: Request) {
         role: role || "TEACHER",
       },
     });
+
+    // Invalidate the cache because the user count has changed!
+    await redis.del("admin:stats");
+    console.log("🧹 Cache Invalidated: admin:stats");
+    // ----------------------
 
     // Remove password from response for security
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
