@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
     if (!result.success) {
       // Format Zod errors into a readable list
-      const formattedErrors = result.error.errors.map((e) => ({
+      const formattedErrors = result.error.issues.map((e) => ({
         field: e.path[0],
         message: e.message,
       }));

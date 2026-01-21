@@ -30,7 +30,10 @@ export async function middleware(req: NextRequest) {
 
     try {
       // Verify Token (using jose)
-      const { payload } = await jwtVerify(token, secretKey);
+      const { payload } = await jwtVerify(token, secretKey, {
+        algorithms: ["HS256"], // Be specific about algorithm
+        clockTolerance: 5, // <--- ADD THIS (Allow 5 seconds time difference)
+      });
 
       // Role Check for Admin Routes
       if (isAdminRoute && payload.role !== "ADMIN") {
@@ -51,6 +54,8 @@ export async function middleware(req: NextRequest) {
         },
       });
     } catch (error) {
+      console.error("Middleware Auth Error:", error);
+
       return NextResponse.json(
         { success: false, message: "Invalid or expired token" },
         { status: 403 }

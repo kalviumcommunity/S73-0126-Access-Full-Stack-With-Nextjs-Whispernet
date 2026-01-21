@@ -9,7 +9,7 @@ export const studentSchema = z.object({
     .max(50, "Name cannot exceed 50 characters"),
 
   grade: z
-    .number({ invalid_type_error: "Grade must be a number" })
+    .number({ error: "Grade must be a number" })
     .min(1, "Grade must be at least 1")
     .max(12, "Grade cannot be higher than 12")
     .int("Grade must be an integer"),
