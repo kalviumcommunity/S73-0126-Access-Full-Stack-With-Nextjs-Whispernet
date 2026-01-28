@@ -18,18 +18,24 @@ enum Role {
 
 // 1. User: Teachers and Admins
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  password  String
-  phone     String?
-  role      Role     @default(TEACHER)
-  createdAt DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  name          String?
+  password      String   @default("") // Empty for OAuth users
+  phone         String?
+  role          Role     @default(TEACHER)
+  createdAt     DateTime @default(now())
+  
+  // OAuth fields
+  googleId      String?  @unique // Google OAuth ID
+  avatar        String?  // Profile picture URL
+  authProvider  String   @default("email") // "email" or "google"
 
   // Relationships
   // (Add if teachers manage specific classes later)
 
   @@index([role]) // Index for faster searching by role
+  @@index([googleId]) // Index for OAuth lookups
 }
 
 // 2. Student: The core entity

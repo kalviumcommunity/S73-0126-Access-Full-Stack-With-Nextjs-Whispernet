@@ -1,5 +1,4 @@
 // app/api/admin/stats/route.ts
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import redis from "@/lib/redis"; // Import Redis
 import { sendSuccess } from "@/lib/responseHandler";
