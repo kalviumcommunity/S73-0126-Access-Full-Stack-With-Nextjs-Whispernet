@@ -1,258 +1,331 @@
-# Rural Education App - Offline-First Rendering Demo
+# 🏫 RuralEdu - Offline-First Education Portal
 
-## Problem Statement
-Rural schools struggle with low bandwidth. This app demonstrates how Next.js rendering modes can optimize performance for these environments.
-
-## Rendering Strategies Implemented
-
-### 1. Static Site Generation (SSG) - /textbooks
-* **Why:** Textbooks are static content.
-* **Performance:** Pre-rendered HTML means zero server wait time and easy caching for offline use.
-
-### 2. Server-Side Rendering (SSR) - /dashboard
-* **Why:** Teachers need real-time attendance data.
-* **Trade-off:** Slower TTFB (Time to First Byte) but ensures data accuracy.
-
-### 3. Incremental Static Regeneration (ISR) - /notices
-* **Why:** Notices change daily, not second-by-second.
-* **Benefit:** Reduces server load by 99% compared to SSR, while keeping content relatively fresh.
-
-## Build Evidence
-Insert Screenshot of your `npm run build` terminal output here
+A modern, offline-capable web application designed for rural schools with limited internet connectivity. Built with **Next.js 16**, **React 19**, **TypeScript**, and a complete backend stack including **PostgreSQL**, **Redis**, and **Docker**.
 
 ---
 
-# 🛠️ Code Quality & Configuration
+## 📋 Table of Contents
 
-To ensure our team writes clean, bug-free code, we have implemented strict linting and formatting rules.
-
-## 1. TypeScript Configuration (`tsconfig.json`)
-We enabled `strict: true`, `noImplicitAny`, and `noUnusedLocals`.
-* **Why:** This prevents "undefined" errors at runtime and forces us to handle data types explicitly.
-
-## 2. ESLint + Prettier
-* **Style:** Double quotes, semi-colons required, tab width 2.
-* **Quality:** No unused variables, warnings on `console.log`.
-* **Why:** Ensures the code looks like it was written by one person, even with a team of 10.
-
-## 3. Husky (Pre-Commit Hooks)
-We use `lint-staged` to run checks before every commit.
-* **Workflow:** If a developer tries to commit code with errors, the commit is blocked automatically.
-
-# 🔐 Environment Variable Management
-
-To ensure security, this project separates server secrets from client configuration.
-
-## Setup Instructions
-1. Copy the example file: `cp .env.example .env.local`
-2. Fill in the real values in `.env.local`.
-
-## Variable Reference
-
-| Variable | Scope | Purpose |
-| :--- | :--- | :--- |
-| `DATABASE_URL` | **Server Only** | Connection string for PostgreSQL. Never exposed to browser. |
-| `API_SECRET_KEY` | **Server Only** | Private key for backend services. |
-| `NEXT_PUBLIC_APP_NAME` | **Client & Server** | The public display name of the app. |
-| `NEXT_PUBLIC_API_BASE_URL` | **Client & Server** | Base URL for fetching data. |
-
-## Security Measures
-* **.gitignore:** Configured to ignore `.env.local` so secrets are never pushed to GitHub.
-* **Prefixing:** Only variables starting with `NEXT_PUBLIC_` are bundled to the client.
-
-## Reflection
-If this app scaled to 10x users, I would move the **Teacher Dashboard** from pure SSR to Client-Side Fetching (SWR/TanStack Query) or aggressive caching to prevent the server from crashing under load.
+- [Overview](#-overview)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Getting Started](#-getting-started)
+- [Project Structure](#-project-structure)
+- [Rendering Strategies](#-rendering-strategies)
+- [Authentication](#-authentication)
+- [API Documentation](#-api-documentation)
+- [Database Design](#-database-design)
+- [Caching Strategy](#-caching-strategy)
+- [Docker Setup](#-docker-setup)
+- [Code Quality](#-code-quality)
 
 ---
 
-# Concept 3: Cloud Deployments & Docker
+## 🎯 Overview
 
-## 1. Containerization (Docker)
-I Dockerized the Rural School Portal to ensure it runs consistently across any environment.
-* **Optimization:** Used a "Multi-Stage Build" in the Dockerfile to reduce the final image size.
-* **Security:** Ran the container as a non-root user (`nextjs`) to prevent vulnerability escalation.
+**Problem:** Rural schools in India struggle with inconsistent internet connectivity, making it difficult for teachers to manage student records and access educational resources.
 
-## 2. CI/CD Pipeline (GitHub Actions)
-I set up an automated pipeline that triggers on every push.
-* **Steps:** It installs dependencies, lints the code for errors, builds the Next.js app, and verifies the Docker build.
-* **Benefit:** This prevents broken code from ever reaching the "production" branch.
+**Solution:** RuralEdu is an offline-first Progressive Web App (PWA) that:
 
-## 3. Cloud Deployment Strategy (AWS)
-*Architecture Plan:*  
-For a production deployment to AWS, I would use **AWS App Runner** or **ECS (Elastic Container Service)**.
-1. **Registry:** Push the Docker image to AWS ECR (Elastic Container Registry).
-2. **Service:** Connect App Runner to ECR.
-3. **Automation:** Update the GitHub Action to push the new image to AWS automatically on a successful build.
+- Works offline using Service Workers and cached content
+- Uses smart rendering strategies (SSG, SSR, ISR) to minimize data usage
+- Provides teachers with a dashboard to manage students, attendance, and notices
+- Offers students access to pre-rendered textbooks that load instantly
 
-## Evidence
-[Insert Screenshot of your Terminal running the Docker Container]  
-[Insert Screenshot of the "Green" GitHub Actions run]   
+---
 
-# 🐳 Docker & Compose Setup
+## ✨ Features
 
-I have containerized the entire application stack to ensure consistency across development environments.
+| Feature                   | Description                                               |
+| ------------------------- | --------------------------------------------------------- |
+| 🔐 **Authentication**     | Email/password login + Google OAuth with JWT tokens       |
+| 👨‍🎓 **Student Management** | Full CRUD operations with search, pagination & validation |
+| 📊 **Admin Dashboard**    | Real-time statistics with Redis caching (10ms response)   |
+| 📚 **Digital Textbooks**  | Pre-rendered content (SSG) for instant offline access     |
+| 📢 **School Notices**     | ISR-powered announcements that refresh hourly             |
+| 📱 **PWA Support**        | Installable app with offline fallback page                |
+| 🎨 **Modern UI**          | Glassmorphism design with Tailwind CSS                    |
 
-## Services Configured
-1.  **App (`rural-portal-app`):** The Next.js application built using a multi-stage Dockerfile.
-2.  **Database (`rural-postgres-db`):** PostgreSQL 15 running on port 5432.
-3.  **Cache (`rural-redis-cache`):** Redis 7 running on port 6379.
+---
 
-## Networking
-All services share a custom bridge network called `rural_network`.
-* The app connects to the DB via the hostname: `db`
-* The app connects to Redis via the hostname: `redis`
+## 🛠 Tech Stack
 
-## How to Run
-1.  Ensure Docker Desktop is running.
-2.  Run the command:
-    ```bash
-    docker-compose up --build
-    ```
-3.  Access the app at `http://localhost:3000`.
+### Frontend
 
-## Evidence
-![Docker containers](image.png)
+| Technology   | Version | Purpose                         |
+| ------------ | ------- | ------------------------------- |
+| Next.js      | 16.1.1  | React framework with App Router |
+| React        | 19.2.3  | UI component library            |
+| TypeScript   | 5.x     | Type-safe development           |
+| Tailwind CSS | 4.x     | Utility-first styling           |
+| Lucide React | 0.563.0 | Modern icon library             |
 
-# 🗄️ Database Schema & Design
+### Backend
 
-I designed a normalized PostgreSQL schema using Prisma to ensure data integrity and scalability.
+| Technology         | Purpose                    |
+| ------------------ | -------------------------- |
+| Next.js API Routes | RESTful API endpoints      |
+| Prisma ORM         | Type-safe database queries |
+| PostgreSQL 15      | Relational database        |
+| Redis 7            | Response caching           |
+| JWT (jose)         | Stateless authentication   |
+| Zod                | Runtime input validation   |
+| bcrypt             | Password hashing           |
 
-## Entity Relationship Diagram (ERD)
-* **User:** Manages authentication (Teachers/Admins).
-* **Student:** Core entity containing grade/section info.
-* **Attendance:** Linked to Student (1-to-Many). Tracks daily status.
-* **Notice:** Standalone entity for school announcements.
+### DevOps
 
-## Scalability Decisions
-1.  **Normalization:** Separated `Attendance` into its own table to prevent the `Student` table from bloating with daily records.
-2.  **Indexing:** Added an index on `Student(grade)` and `Attendance(date)` to make filtering by class or date instant, even with millions of records.
-3.  **Constraints:** `User.email` is marked `@unique` to prevent duplicate accounts.
+| Technology        | Purpose                     |
+| ----------------- | --------------------------- |
+| Docker            | Containerization            |
+| Docker Compose    | Multi-service orchestration |
+| Husky             | Pre-commit hooks            |
+| ESLint + Prettier | Code quality                |
 
-## Evidence
-![alt text](image-2.png)
-![alt text](image-1.png) 
+---
 
-# 🔌 Prisma ORM Setup
+## 🚀 Getting Started
 
-I have integrated Prisma ORM to manage database communication type-safely.
+### Prerequisites
 
-## Singleton Pattern
-To prevent connection exhaustion in Next.js development (hot-reloading), I implemented a singleton instance in `lib/prisma.ts`.
+- Node.js 20+
+- Docker Desktop (for full stack)
+- PostgreSQL & Redis (or use Docker)
 
-## Setup Steps
-1.  **Init:** `npx prisma init` (Created schema and .env)
-2.  **Generate:** `npx prisma generate` (Created the TypeScript client)
-3.  **Singleton:** Created `lib/prisma.ts` to reuse the active connection.
+### Quick Start (Development)
 
-## Evidence
-![alt text](image-3.png)
-![alt text](image-4.png)
+```bash
+# 1. Clone the repository
+git clone https://github.com/your-repo/rural-edu-app.git
+cd rural-edu-app
 
-# 🔄 Database Migrations & Seeding
+# 2. Install dependencies
+npm install
 
-We use Prisma Migrations to version-control our database schema.
+# 3. Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your database credentials
 
-## Workflow
-1.  **Modify Schema:** Edit `prisma/schema.prisma`.
-2.  **Create Migration:** `npx prisma migrate dev --name <descriptive_name>`
-3.  **Reset (Dev Only):** `npx prisma migrate reset` (Drops DB, re-applies migrations, runs seed).
+# 4. Generate Prisma client & run migrations
+npx prisma generate
+npx prisma migrate dev
 
-## Seed Script
-The seed script (`prisma/seed.ts`) is **idempotent**. It clears `Attendance` and `Student` tables before running, ensuring no duplicate data errors during development.
+# 5. Seed the database (optional)
+npx prisma db seed
 
-## Evidence
-![alt text](image-5.png)
-![alt text](image-6.png)
+# 6. Start development server
+npm run dev
+```
 
-# ⚡ Database Performance & Optimization
+### Docker Setup (Recommended)
 
-I implemented transactions for data integrity and indexes for query speed.
+```bash
+# Start all services (App + PostgreSQL + Redis)
+docker-compose up --build
 
-## 1. Transactions
-I used `prisma.$transaction` to ensure Atomicity.
-* **Scenario:** Registering a student and marking initial attendance.
-* **Rollback:** If attendance marking fails, the student creation is reverted.
+# Access the app at http://localhost:3000
+```
 
-## 2. Optimization Strategy
-* **Indexes:** Added `@@index([role])` to Users and `@@index([status, date])` to Attendance.
-* **Projection:** Used `.select` to fetch only necessary fields.
-* **Pagination:** Used `.take(10)` to prevent fetching the whole table.
+---
 
-## 3. Benchmarking
-| Query Type | Execution Time | Notes |
-| :--- | :--- | :--- |
-| `findMany()` (All fields) | ~15ms | Fetches unnecessary data |
-| `findMany({ select, take })` | ~2ms | Optimized payload size |
+## 📁 Project Structure
 
-## Evidence
-![alt text](image-7.png)
-![alt text](image-8.png)
+```
+rural-edu-app/
+├── app/                    # Next.js App Router
+│   ├── api/                # API Routes
+│   │   ├── auth/           # Login, Signup, Google OAuth
+│   │   ├── students/       # Student CRUD operations
+│   │   ├── admin/          # Admin statistics
+│   │   └── profile/        # User profile
+│   ├── components/         # Reusable UI components
+│   ├── dashboard/          # Teacher dashboard (SSR)
+│   ├── textbooks/          # Digital textbooks (SSG)
+│   ├── notices/            # School notices (ISR)
+│   └── login/              # Authentication pages
+├── context/                # React Context (AuthContext)
+├── lib/                    # Utilities & configurations
+│   ├── prisma.ts           # Database client (singleton)
+│   ├── redis.ts            # Cache client
+│   ├── api.ts              # Frontend API wrapper
+│   └── schemas/            # Zod validation schemas
+├── prisma/                 # Database schema & migrations
+├── public/                 # Static assets & PWA files
+└── docker-compose.yml      # Multi-container setup
+```
 
-# 🌐 API Structure
+---
 
-I designed a RESTful API using Next.js file-based routing.
+## 🎨 Rendering Strategies
 
-## Endpoints
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/students` | Fetch all students (Supports `?page=` & `?limit=`) |
-| `POST` | `/api/students` | Register a new student |
-| `GET` | `/api/students/:id` | Fetch details of a specific student |
-| `PATCH` | `/api/students/:id` | Update student details |
-| `DELETE` | `/api/students/:id` | Remove a student |
+We leverage Next.js rendering modes strategically based on data requirements:
 
-## Example Response (Pagination)
+| Page              | Strategy                                  | Reason                                          |
+| ----------------- | ----------------------------------------- | ----------------------------------------------- |
+| `/textbooks`      | **SSG** (Static Site Generation)          | Content never changes, pre-render at build time |
+| `/textbooks/[id]` | **SSG** with `generateStaticParams`       | All textbook pages pre-built                    |
+| `/dashboard`      | **SSR** (Server-Side Rendering)           | Teachers need real-time student data            |
+| `/notices`        | **ISR** (Incremental Static Regeneration) | Notices update daily, revalidate every hour     |
+| `/login`          | **CSR** (Client-Side Rendering)           | Authentication happens in browser               |
+
+---
+
+## 🔐 Authentication
+
+### Flow
+
+1. User submits credentials → Server validates with bcrypt
+2. Server generates JWT token (expires in 7 days)
+3. Token stored in localStorage, sent with every API request
+4. Middleware verifies token on protected routes
+5. Role-based access: `ADMIN`, `TEACHER`, `STUDENT`
+
+### Supported Methods
+
+- **Email/Password:** Traditional signup with bcrypt hashing
+- **Google OAuth:** One-click sign-in with Google Identity Services
+
+---
+
+## 🌐 API Documentation
+
+### Authentication
+
+| Method | Endpoint           | Description               |
+| ------ | ------------------ | ------------------------- |
+| `POST` | `/api/auth/signup` | Register new user         |
+| `POST` | `/api/auth/login`  | Login with email/password |
+| `POST` | `/api/auth/google` | Google OAuth callback     |
+
+### Students
+
+| Method   | Endpoint                        | Description               |
+| -------- | ------------------------------- | ------------------------- |
+| `GET`    | `/api/students?page=1&limit=10` | List students (paginated) |
+| `POST`   | `/api/students`                 | Create new student        |
+| `GET`    | `/api/students/:id`             | Get student details       |
+| `PATCH`  | `/api/students/:id`             | Update student            |
+| `DELETE` | `/api/students/:id`             | Delete student            |
+
+### Admin
+
+| Method | Endpoint           | Description                   |
+| ------ | ------------------ | ----------------------------- |
+| `GET`  | `/api/admin/stats` | Dashboard statistics (cached) |
+
+### Response Format
+
+All API responses follow a consistent envelope:
+
 ```json
 {
-  "data": [ ... ],
-  "meta": {
-    "total": 5,
-    "page": 1,
-    "limit": 10
-  }
+  "success": true,
+  "message": "Students fetched successfully",
+  "data": { ... },
+  "timestamp": "2026-01-28T10:30:00.000Z"
 }
 ```
 
-# 🛡️ Global API Response Handler
+---
 
-I implemented a centralized response handler to ensure all API endpoints return data in a predictable format.
+## 🗄 Database Design
 
-## The Standard Envelope
-Every API response (Success or Error) follows this structure:
+### Entity Relationship
 
-```json
-{
-  "success": boolean,
-  "message": string,
-  "data": any,       // Only present on success
-  "error": {         // Only present on error
-    "code": "ERROR_CODE",
-    "details": "..."
-  },
-  "timestamp": string
-}
+```
+User (1) ──────────────────────────────────────
+  │  id, email, password, role, googleId
+  │
+Student (1) ────────< Attendance (Many)
+  │  id, name, grade, section     │  id, date, status, studentId
+  │
+Notice (Standalone)
+  │  id, title, content, isActive, updatedAt
 ```
 
-# 🛡️ Zod Input Validation
+### Performance Indexes
 
-I integrated **Zod** to validate all incoming API requests.
+- `User(role)` - Fast role-based queries
+- `User(googleId)` - OAuth lookups
+- `Student(grade)` - Filter by class
+- `Attendance(date)` - Today's attendance
+- `Attendance(status, date)` - Composite for "who was absent on X date"
 
-## Schema (`lib/schemas/studentSchema.ts`)
-* **Name:** Min 2 chars, Max 50.
-* **Grade:** Int between 1-12.
-* **Section:** Optional, 1 char max.
+---
 
-## Error Handling
-If validation fails, the API returns a `400 Bad Request` with a detailed list of what went wrong, wrapped in our Global Response Handler.
+## ⚡ Caching Strategy
 
-```json
-// Example Validation Error
-{
-  "success": false,
-  "message": "Validation failed",
-  "error": {
-    "code": "VAL_001",
-    "details": [ { "field": "grade", "message": "Grade cannot be higher than 12" } ]
-  }
-}
+We use **Redis** with the **Cache-Aside Pattern** for the admin dashboard:
+
+1. Check Redis for `admin:stats` key
+2. **Cache HIT:** Return instantly (~10ms)
+3. **Cache MISS:** Query PostgreSQL (~200ms), store in Redis with 60s TTL
+4. **Invalidation:** When students are created/deleted, cache is cleared
+
+```typescript
+// On student create/delete
+await redis.del("admin:stats");
 ```
+
+---
+
+## 🐳 Docker Setup
+
+### Services
+
+| Container           | Image          | Port | Purpose             |
+| ------------------- | -------------- | ---- | ------------------- |
+| `rural-portal-app`  | Node 20 Alpine | 3000 | Next.js application |
+| `rural-postgres-db` | PostgreSQL 15  | 5432 | Primary database    |
+| `rural-redis-cache` | Redis 7        | 6379 | Response cache      |
+
+### Networking
+
+All services communicate via `rural_network` bridge:
+
+- App → DB: `postgres://postgres:password@db:5432/rural_school_db`
+- App → Redis: `redis://redis:6379`
+
+### Commands
+
+```bash
+# Start all services
+docker-compose up --build
+
+# View logs
+docker-compose logs -f app
+
+# Stop and clean up
+docker-compose down -v
+```
+
+---
+
+## ✅ Code Quality
+
+### Tools Configured
+
+| Tool            | Purpose                                           |
+| --------------- | ------------------------------------------------- |
+| **TypeScript**  | Strict mode enabled, no implicit any              |
+| **ESLint**      | Next.js recommended + Core Web Vitals             |
+| **Prettier**    | Consistent formatting (double quotes, semicolons) |
+| **Husky**       | Pre-commit hooks block bad code                   |
+| **lint-staged** | Only lint changed files                           |
+
+### Pre-commit Workflow
+
+```
+git commit → Husky triggers → lint-staged runs → ESLint + Prettier → Commit succeeds/fails
+```
+
+---
+
+## 📄 License
+
+This project is for educational purposes as part of a college course demonstration.
+
+---
+
+## 👥 Contributors
+
+- Built with ❤️ for rural education
