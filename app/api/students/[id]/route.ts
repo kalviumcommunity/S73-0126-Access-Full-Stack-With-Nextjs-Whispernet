@@ -4,6 +4,10 @@ import { ERROR_CODES } from "@/lib/errorCodes";
 import { prisma } from "@/lib/prisma";
 import { studentSchema } from "@/lib/schemas/studentSchema";
 import { ZodError } from "zod";
+import redis from "@/lib/redis";
+
+// Cache key for admin stats (must match admin/stats/route.ts)
+const ADMIN_STATS_CACHE_KEY = "admin:stats";
 
 // Helper to validate ID
 function parseId(params: { id: string }) {
@@ -98,6 +102,9 @@ export async function DELETE(
     await prisma.student.delete({
       where: { id: studentId },
     });
+
+    // Invalidate admin stats cache so dashboard updates immediately
+    await redis.del(ADMIN_STATS_CACHE_KEY);
 
     return sendSuccess(null, "Student deleted successfully");
   } catch (error) {

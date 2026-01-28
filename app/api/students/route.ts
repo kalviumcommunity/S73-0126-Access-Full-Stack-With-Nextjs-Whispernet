@@ -3,6 +3,10 @@ import { sendSuccess, sendError } from "@/lib/responseHandler";
 import { ERROR_CODES } from "@/lib/errorCodes";
 import { prisma } from "@/lib/prisma";
 import { studentSchema } from "@/lib/schemas/studentSchema";
+import redis from "@/lib/redis";
+
+// Cache key for admin stats (must match admin/stats/route.ts)
+const ADMIN_STATS_CACHE_KEY = "admin:stats";
 
 export async function GET(request: Request) {
   try {
@@ -68,6 +72,9 @@ export async function POST(request: Request) {
         section: result.data.section || "A",
       },
     });
+
+    // Invalidate admin stats cache so dashboard updates immediately
+    await redis.del(ADMIN_STATS_CACHE_KEY);
 
     return sendSuccess(newStudent, "Student created successfully", 201);
   } catch (error) {
