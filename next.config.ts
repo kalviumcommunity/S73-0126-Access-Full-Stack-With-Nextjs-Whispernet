@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  output: "standalone",
+  // Note: Don't use output: "standalone" for Netlify deployment
+  // Netlify uses its own Next.js runtime via @netlify/plugin-nextjs
 
   // PWA configuration
   async headers() {
