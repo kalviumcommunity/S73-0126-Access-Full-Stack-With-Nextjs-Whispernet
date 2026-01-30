@@ -104,7 +104,11 @@ export async function DELETE(
     });
 
     // Invalidate admin stats cache so dashboard updates immediately
-    await redis.del(ADMIN_STATS_CACHE_KEY);
+    try {
+      await redis.del(ADMIN_STATS_CACHE_KEY);
+    } catch (cacheError) {
+      console.warn("Redis cache invalidation failed (non-fatal):", cacheError);
+    }
 
     return sendSuccess(null, "Student deleted successfully");
   } catch (error) {
