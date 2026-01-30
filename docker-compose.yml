@@ -13,7 +13,9 @@ services:
     environment:
       # CRITICAL: We use the service name 'db' and 'redis' as the hostname, not 'localhost'
       - DATABASE_URL=postgres://postgres:password@db:5432/rural_school_db
+      - DIRECT_URL=postgres://postgres:password@db:5432/rural_school_db
       - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=docker-dev-secret-change-in-production
       - NEXT_PUBLIC_API_URL=http://localhost:3000/api
       - NODE_ENV=production
     depends_on:

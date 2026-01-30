@@ -30,10 +30,16 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-.env*.local
-
+# env files (keep .env.example for documentation)
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test.local
+.env.production
+.env.production.local
+.env.staging
+!.env.example
 
 # vercel
 .vercel
@@ -42,12 +48,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.env
-.env.example
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-.env.staging 
-!.env.example
+# Prisma generated files
 /app/generated/prisma

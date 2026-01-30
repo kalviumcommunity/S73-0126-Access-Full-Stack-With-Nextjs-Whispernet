@@ -2,8 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  // Note: Don't use output: "standalone" for Netlify deployment
+  // Use standalone output for Docker builds, but not for Netlify
   // Netlify uses its own Next.js runtime via @netlify/plugin-nextjs
+  // Set STANDALONE_BUILD=true in Dockerfile to enable standalone output
+  ...(process.env.STANDALONE_BUILD === "true" && { output: "standalone" }),
 
   // PWA configuration
   async headers() {

@@ -13,6 +13,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Note: We disable telemetry for privacy
 ENV NEXT_TELEMETRY_DISABLED=1
+# Enable standalone output for Docker builds
+ENV STANDALONE_BUILD=true
 RUN npm run build
 
 # 3. Production image, copy all the files and run next
