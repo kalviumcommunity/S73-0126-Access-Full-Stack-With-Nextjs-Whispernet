@@ -44,8 +44,13 @@ export async function POST(req: Request) {
     });
 
     // Invalidate the cache because the user count has changed!
-    await redis.del("admin:stats");
-    console.log("🧹 Cache Invalidated: admin:stats");
+    // Use try-catch to prevent Redis failures from breaking signup
+    try {
+      await redis.del("admin:stats");
+      console.log("🧹 Cache Invalidated: admin:stats");
+    } catch (cacheError) {
+      console.warn("Redis cache invalidation failed (non-fatal):", cacheError);
+    }
     // ----------------------
 
     // Remove password from response for security

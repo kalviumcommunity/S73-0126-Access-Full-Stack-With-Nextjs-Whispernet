@@ -13,7 +13,12 @@ export async function GET() {
     const start = Date.now();
 
     // 1. CHECK CACHE (Cache-Aside Pattern)
-    const cachedData = await redis.get(CACHE_KEY);
+    let cachedData: string | null = null;
+    try {
+      cachedData = await redis.get(CACHE_KEY);
+    } catch (cacheError) {
+      console.warn("Redis cache read failed (non-fatal):", cacheError);
+    }
 
     if (cachedData) {
       const duration = Date.now() - start;
@@ -42,10 +47,13 @@ export async function GET() {
 
     // 3. STORE IN CACHE
     // "EX" = Expire in seconds
-    await redis.set(CACHE_KEY, JSON.stringify(stats), "EX", CACHE_TTL);
-
-    const duration = Date.now() - start;
-    console.log(`💾 Data Cached (${duration}ms)`);
+    try {
+      await redis.set(CACHE_KEY, JSON.stringify(stats), "EX", CACHE_TTL);
+      const duration = Date.now() - start;
+      console.log(`💾 Data Cached (${duration}ms)`);
+    } catch (cacheError) {
+      console.warn("Redis cache write failed (non-fatal):", cacheError);
+    }
 
     return sendSuccess(stats, "Stats fetched from Database");
   } catch (error) {

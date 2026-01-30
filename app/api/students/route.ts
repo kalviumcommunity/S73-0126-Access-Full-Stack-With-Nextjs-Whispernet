@@ -74,7 +74,11 @@ export async function POST(request: Request) {
     });
 
     // Invalidate admin stats cache so dashboard updates immediately
-    await redis.del(ADMIN_STATS_CACHE_KEY);
+    try {
+      await redis.del(ADMIN_STATS_CACHE_KEY);
+    } catch (cacheError) {
+      console.warn("Redis cache invalidation failed (non-fatal):", cacheError);
+    }
 
     return sendSuccess(newStudent, "Student created successfully", 201);
   } catch (error) {
