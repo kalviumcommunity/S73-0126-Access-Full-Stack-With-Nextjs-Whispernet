@@ -5,7 +5,9 @@ import { sendSuccess, sendError } from "@/lib/responseHandler";
 import { ERROR_CODES } from "@/lib/errorCodes";
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+// Use NEXT_PUBLIC_GOOGLE_CLIENT_ID as fallback since that's what frontend uses
+const GOOGLE_CLIENT_ID =
+  process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
 interface GoogleTokenPayload {
   iss: string;
@@ -41,7 +43,12 @@ async function verifyGoogleToken(
 
     // Verify the token is for our app
     if (payload.aud !== GOOGLE_CLIENT_ID) {
-      console.error("Token audience mismatch");
+      console.error(
+        "Token audience mismatch. Expected:",
+        GOOGLE_CLIENT_ID,
+        "Got:",
+        payload.aud
+      );
       return null;
     }
 
@@ -190,6 +197,12 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.error("Google auth failed:", error);
-    return sendError("Authentication failed", ERROR_CODES.INTERNAL_ERROR, 500);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    return sendError(
+      "Authentication failed: " + errorMessage,
+      ERROR_CODES.INTERNAL_ERROR,
+      500
+    );
   }
 }
