@@ -61,11 +61,16 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Signup failed:", error);
 
+    // Include error details for debugging
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    console.error("Error details:", errorMessage);
+
     return sendError(
-      "Signup failed",
+      "Signup failed: " + errorMessage,
       ERROR_CODES.INTERNAL_ERROR,
-      500
-      // REMOVED: error.message
+      500,
+      errorMessage
     );
   }
 }
