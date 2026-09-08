@@ -5,74 +5,141 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL") // Add this for migrations
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-// Role enum - defined at top level
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
 enum Role {
   TEACHER
   STUDENT
   ADMIN
 }
 
-// 1. User: Teachers and Admins
-model User {
-  id            Int      @id @default(autoincrement())
-  email         String   @unique
-  name          String?
-  password      String   @default("") // Empty for OAuth users
-  phone         String?
-  role          Role     @default(TEACHER)
-  createdAt     DateTime @default(now())
-  
-  // OAuth fields
-  googleId      String?  @unique // Google OAuth ID
-  avatar        String?  // Profile picture URL
-  authProvider  String   @default("email") // "email" or "google"
-
-  // Relationships
-  // (Add if teachers manage specific classes later)
-
-  @@index([role]) // Index for faster searching by role
-  @@index([googleId]) // Index for OAuth lookups
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
 }
 
-// 2. Student: The core entity
+enum NoticeCategory {
+  GENERAL
+  ACADEMIC
+  EXAM
+  EVENT
+  SPORTS
+  HOLIDAY
+  FACILITY
+  MEETING
+}
+
+enum NoticePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+/// Staff accounts: teachers and administrators.
+model User {
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  name     String?
+  password String  @default("") // empty for OAuth-only accounts
+  phone    String?
+  role     Role    @default(TEACHER)
+
+  // OAuth
+  googleId     String? @unique
+  avatar       String?
+  authProvider String  @default("email") // "email" | "google"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  notices       Notice[]
+  markedRecords Attendance[] @relation("MarkedBy")
+
+  @@index([role])
+  @@index([googleId])
+}
+
+/// A pupil enrolled at the school.
 model Student {
-  id        Int      @id @default(autoincrement())
-  name      String
-  grade     Int      // e.g., 5, 6, 7
-  section   String?  // e.g., "A", "B"
-  
-  // Relationships
+  id            Int     @id @default(autoincrement())
+  name          String
+  rollNumber    String?
+  grade         Int // 1..12
+  section       String  @default("A")
+  guardianName  String?
+  guardianPhone String?
+  isActive      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
   attendance Attendance[]
 
-  @@index([grade]) // Index for faster searching by grade
+  @@unique([grade, section, rollNumber])
+  @@index([grade])
+  @@index([grade, section])
+  @@index([isActive])
+  @@index([name])
 }
 
-// 3. Attendance: Tracks daily status (1-to-Many with Student)
+/// One attendance record per student per school day.
 model Attendance {
-  id        Int      @id @default(autoincrement())
-  date      DateTime @default(now())
-  status    String   // PRESENT, ABSENT, LATE
-  
-  // Foreign Key
+  id     Int              @id @default(autoincrement())
+  /// Normalised to midnight UTC so a day has exactly one record per student.
+  date   DateTime         @db.Date
+  status AttendanceStatus @default(PRESENT)
+  note   String?
+
   studentId Int
-  student   Student  @relation(fields: [studentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@index([date]) // Index for querying "today's attendance"
+  markedById Int?
+  markedBy   User? @relation("MarkedBy", fields: [markedById], references: [id], onDelete: SetNull)
 
-  // ADD THIS INDEX (Composite index for common query: "Who was absent on Date X?")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([studentId, date])
+  @@index([date])
   @@index([status, date])
 }
 
-// 4. Notice: School announcements (For the ISR page)
+/// School announcements shown on the public notice board.
 model Notice {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String
-  isActive  Boolean  @default(true)
-  updatedAt DateTime @updatedAt
+  id       Int            @id @default(autoincrement())
+  title    String
+  content  String
+  category NoticeCategory @default(GENERAL)
+  priority NoticePriority @default(NORMAL)
+  isPinned Boolean        @default(false)
+  isActive Boolean        @default(true)
+
+  /// Display name of the desk that issued the notice (e.g. "Examination Cell").
+  authorName String
+  authorId   Int?
+  author     User?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  publishedAt DateTime  @default(now())
+  expiresAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([isActive, publishedAt])
+  @@index([category])
+  @@index([isPinned])
 }

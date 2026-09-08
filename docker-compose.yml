@@ -1,60 +1,82 @@
-# version: '3.8'
-
 services:
-  # 1. The Next.js Application
+  # The Next.js application.
   app:
     container_name: rural-portal-app
     build:
       context: .
       dockerfile: Dockerfile
-    restart: always
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      # CRITICAL: We use the service name 'db' and 'redis' as the hostname, not 'localhost'
-      - DATABASE_URL=postgres://postgres:password@db:5432/rural_school_db
-      - DIRECT_URL=postgres://postgres:password@db:5432/rural_school_db
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=docker-dev-secret-change-in-production
-      - NEXT_PUBLIC_API_URL=http://localhost:3000/api
-      - NODE_ENV=production
+      # Service names, not localhost — each container has its own loopback.
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-password}@db:5432/rural_school_db
+      DIRECT_URL: postgres://postgres:${POSTGRES_PASSWORD:-password}@db:5432/rural_school_db
+      REDIS_URL: redis://redis:6379
+      # Override in a real deployment; the app refuses to start signing tokens
+      # with anything shorter than 32 characters.
+      JWT_SECRET: ${JWT_SECRET:-docker-development-secret-change-me-in-production}
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      NODE_ENV: production
     depends_on:
-      - db
-      - redis
+      # Start only once the dependencies can actually serve traffic, rather
+      # than the moment their containers exist.
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     networks:
       - rural_network
 
-  # 2. PostgreSQL Database
+  # PostgreSQL — the source of truth.
   db:
     image: postgres:15-alpine
     container_name: rural-postgres-db
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: rural_school_db
     ports:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rural_school_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - rural_network
 
-  # 3. Redis Cache
+  # Redis — a cache, never a store. Losing it costs latency, not data, so no
+  # volume is mounted and no persistence is configured.
   redis:
     image: redis:7-alpine
     container_name: rural-redis-cache
-    restart: always
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no --maxmemory 128mb --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks:
       - rural_network
 
-# Define Shared Network
 networks:
   rural_network:
     driver: bridge
 
-# Define Persistent Storage for DB
 volumes:
   db_data:

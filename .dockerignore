@@ -1,5 +1,13 @@
 node_modules
 .next
 .git
-.env*
+.github
+.husky
+.env
+.env.*
+!.env.example
 README.md
+Dockerfile
+docker-compose.yml
+*.log
+*.tsbuildinfo

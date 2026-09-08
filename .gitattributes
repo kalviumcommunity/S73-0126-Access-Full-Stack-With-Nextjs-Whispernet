@@ -1,0 +1,21 @@
+# Normalise line endings so a teammate on macOS or Linux does not see every
+# file as fully rewritten. Text is stored LF in the repository and checked out
+# native on Windows.
+* text=auto eol=lf
+
+# Windows-only scripts must keep CRLF to remain executable.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets — never diffed or line-ending converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+
+# Generated; collapse in pull request diffs.
+package-lock.json linguist-generated=true -diff
