@@ -1,331 +1,330 @@
-# 🏫 RuralEdu - Offline-First Education Portal
+# RuralEdu
 
-A modern, offline-capable web application designed for rural schools with limited internet connectivity. Built with **Next.js 16**, **React 19**, **TypeScript**, and a complete backend stack including **PostgreSQL**, **Redis**, and **Docker**.
+An offline-first school portal for rural India, built with Next.js 16, PostgreSQL and Redis.
 
----
+**The problem.** Rural schools lose connectivity for hours at a time. Software that assumes a
+working network is unusable exactly when a teacher needs it — halfway through marking a register,
+or looking up a guardian's phone number.
 
-## 📋 Table of Contents
-
-- [Overview](#-overview)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Getting Started](#-getting-started)
-- [Project Structure](#-project-structure)
-- [Rendering Strategies](#-rendering-strategies)
-- [Authentication](#-authentication)
-- [API Documentation](#-api-documentation)
-- [Database Design](#-database-design)
-- [Caching Strategy](#-caching-strategy)
-- [Docker Setup](#-docker-setup)
-- [Code Quality](#-code-quality)
+**The approach.** Nothing a teacher does depends on the network being up at that moment. Pages
+already visited keep working, data already seen is stored on the device, and changes made offline
+are queued and sent when the line returns. The server side is fast when it is reachable, and the
+app degrades honestly rather than pretending when it is not.
 
 ---
 
-## 🎯 Overview
+## What it does
 
-**Problem:** Rural schools in India struggle with inconsistent internet connectivity, making it difficult for teachers to manage student records and access educational resources.
+| Area             | Detail                                                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Attendance**   | Daily register per class, four states (present / absent / late / excused), 30-day trend. Fillable offline.         |
+| **Students**     | Full roll with grades, sections, roll numbers and guardian contacts. Server-side search across the whole roster.   |
+| **Notice board** | Publicly readable announcements with categories, priorities, pinning and automatic expiry. Staff publish and edit. |
+| **Textbooks**    | Five books, fifteen chapters, statically rendered. "Save offline" downloads a whole book onto the device.          |
+| **Dashboard**    | Live school figures, Redis-cached, reporting truthfully where each number came from.                               |
+| **Auth**         | Email/password and Google Sign-In, JWT sessions, role-based access for teachers and administrators.                |
 
-**Solution:** RuralEdu is an offline-first Progressive Web App (PWA) that:
+### Who can see what
 
-- Works offline using Service Workers and cached content
-- Uses smart rendering strategies (SSG, SSR, ISR) to minimize data usage
-- Provides teachers with a dashboard to manage students, attendance, and notices
-- Offers students access to pre-rendered textbooks that load instantly
+| Surface                     | Anonymous | Teacher | Admin |
+| --------------------------- | :-------: | :-----: | :---: |
+| Notice board, textbooks     |     ✓     |    ✓    |   ✓   |
+| Dashboard, roster, register |           |    ✓    |   ✓   |
+| Publish / edit notices      |           |    ✓    |   ✓   |
+| Enrol and edit students     |           |    ✓    |   ✓   |
+| Delete a student record     |           |         |   ✓   |
+| Staff account count         |           |         |   ✓   |
 
----
-
-## ✨ Features
-
-| Feature                   | Description                                               |
-| ------------------------- | --------------------------------------------------------- |
-| 🔐 **Authentication**     | Email/password login + Google OAuth with JWT tokens       |
-| 👨‍🎓 **Student Management** | Full CRUD operations with search, pagination & validation |
-| 📊 **Admin Dashboard**    | Real-time statistics with Redis caching (10ms response)   |
-| 📚 **Digital Textbooks**  | Pre-rendered content (SSG) for instant offline access     |
-| 📢 **School Notices**     | ISR-powered announcements that refresh hourly             |
-| 📱 **PWA Support**        | Installable app with offline fallback page                |
-| 🎨 **Modern UI**          | Glassmorphism design with Tailwind CSS                    |
-
----
-
-## 🛠 Tech Stack
-
-### Frontend
-
-| Technology   | Version | Purpose                         |
-| ------------ | ------- | ------------------------------- |
-| Next.js      | 16.1.1  | React framework with App Router |
-| React        | 19.2.3  | UI component library            |
-| TypeScript   | 5.x     | Type-safe development           |
-| Tailwind CSS | 4.x     | Utility-first styling           |
-| Lucide React | 0.563.0 | Modern icon library             |
-
-### Backend
-
-| Technology         | Purpose                    |
-| ------------------ | -------------------------- |
-| Next.js API Routes | RESTful API endpoints      |
-| Prisma ORM         | Type-safe database queries |
-| PostgreSQL 15      | Relational database        |
-| Redis 7            | Response caching           |
-| JWT (jose)         | Stateless authentication   |
-| Zod                | Runtime input validation   |
-| bcrypt             | Password hashing           |
-
-### DevOps
-
-| Technology        | Purpose                     |
-| ----------------- | --------------------------- |
-| Docker            | Containerization            |
-| Docker Compose    | Multi-service orchestration |
-| Husky             | Pre-commit hooks            |
-| ESLint + Prettier | Code quality                |
+Pupils and parents read notices and textbooks without an account — that is the point of putting
+them online in the first place.
 
 ---
 
-## 🚀 Getting Started
+## Getting started
 
-### Prerequisites
-
-- Node.js 20+
-- Docker Desktop (for full stack)
-- PostgreSQL & Redis (or use Docker)
-
-### Quick Start (Development)
+Requires Node 20+ and Docker (for PostgreSQL and Redis).
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/your-repo/rural-edu-app.git
-cd rural-edu-app
-
-# 2. Install dependencies
 npm install
-
-# 3. Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your database credentials
-
-# 4. Generate Prisma client & run migrations
-npx prisma generate
-npx prisma migrate dev
-
-# 5. Seed the database (optional)
-npx prisma db seed
-
-# 6. Start development server
+cp .env.example .env.local        # then edit it — JWT_SECRET must be 32+ chars
+npm run services:up               # PostgreSQL + Redis in Docker
+npm run db:migrate                # create the schema
+npm run db:seed                   # 62 pupils, 4 weeks of attendance, 8 notices
 npm run dev
 ```
 
-### Docker Setup (Recommended)
+Then sign in at http://localhost:3000/login:
+
+| Account               | Password      | Role    |
+| --------------------- | ------------- | ------- |
+| `admin@ruraledu.in`   | `Admin@12345` | ADMIN   |
+| `teacher@ruraledu.in` | `Teacher@123` | TEACHER |
+
+To run the whole stack in containers instead:
 
 ```bash
-# Start all services (App + PostgreSQL + Redis)
-docker-compose up --build
-
-# Access the app at http://localhost:3000
+docker compose up --build
+docker compose exec app npx prisma migrate deploy
 ```
 
+### Scripts
+
+| Command               | Purpose                                               |
+| --------------------- | ----------------------------------------------------- |
+| `npm run dev`         | Development server                                    |
+| `npm run build`       | Generate the Prisma client, then build for production |
+| `npm run lint`        | ESLint (includes the React Compiler rules)            |
+| `npm run typecheck`   | `tsc --noEmit`                                        |
+| `npm run db:migrate`  | Create and apply a migration                          |
+| `npm run db:seed`     | Reseed with demo data                                 |
+| `npm run db:studio`   | Prisma Studio                                         |
+| `npm run services:up` | Start PostgreSQL and Redis                            |
+
 ---
 
-## 📁 Project Structure
+## How "offline-first" actually works
+
+Three separate mechanisms, each doing one job. They are independent — losing any one of them
+degrades the app rather than breaking it.
+
+### 1. Pages — service worker (`public/sw.js`)
+
+| Request type  | Strategy                                                           |
+| ------------- | ------------------------------------------------------------------ |
+| Navigations   | Network first → cached page → `/offline.html`                      |
+| Static assets | Stale-while-revalidate                                             |
+| API reads     | Network first → last good response, tagged `X-From-SW-Cache`       |
+| API writes    | Passed through untouched — queueing is the app's job, not the SW's |
+
+Only `200`, non-opaque responses are cached, so an error page can never be stored and later served
+as if it were content. Updates never reload the page on their own: a teacher mid-register is asked
+first.
+
+### 2. Data you have seen — IndexedDB (`src/lib/offline/db.ts`)
+
+Successful `GET` responses are written to IndexedDB. When a read fails, the stored copy is returned
+and the UI labels it — "showing a saved copy" — rather than passing stale data off as current.
+
+### 3. Changes you make — the outbox (`src/lib/offline/sync.ts`)
+
+A write attempted while offline goes into an IndexedDB queue with a human-readable label
+("Attendance for Grade 5-A on 2026-09-08"). On reconnect the queue is replayed **in order**, because
+"create student" must land before "mark that student present". A `4xx` other than 408/429 is
+permanent, so it is dropped rather than blocking the queue forever.
+
+Replays are safe: attendance is written with an upsert keyed on `(studentId, date)`, so syncing the
+same register twice corrects the row instead of duplicating it.
+
+`navigator.onLine` only reports whether a network interface is up — a captive portal or a dead
+upstream still looks "online" — so a lightweight `HEAD /api/health` probe runs every 30 seconds to
+find out whether the server is genuinely reachable.
+
+---
+
+## Caching
+
+Redis is used cache-aside, and is **never** required. Every cache call goes through
+`src/lib/cache/index.ts`, which returns the cache status alongside the value:
 
 ```
-rural-edu-app/
-├── app/                    # Next.js App Router
-│   ├── api/                # API Routes
-│   │   ├── auth/           # Login, Signup, Google OAuth
-│   │   ├── students/       # Student CRUD operations
-│   │   ├── admin/          # Admin statistics
-│   │   └── profile/        # User profile
-│   ├── components/         # Reusable UI components
-│   ├── dashboard/          # Teacher dashboard (SSR)
-│   ├── textbooks/          # Digital textbooks (SSG)
-│   ├── notices/            # School notices (ISR)
-│   └── login/              # Authentication pages
-├── context/                # React Context (AuthContext)
-├── lib/                    # Utilities & configurations
-│   ├── prisma.ts           # Database client (singleton)
-│   ├── redis.ts            # Cache client
-│   ├── api.ts              # Frontend API wrapper
-│   └── schemas/            # Zod validation schemas
-├── prisma/                 # Database schema & migrations
-├── public/                 # Static assets & PWA files
-└── docker-compose.yml      # Multi-container setup
+HIT      served from Redis
+MISS     computed from PostgreSQL, then stored
+BYPASS   Redis unreachable — answered from PostgreSQL
 ```
 
----
+That status is surfaced on the response as `X-Cache` and shown on the dashboard, so the panel
+reports what actually happened instead of guessing from response latency.
 
-## 🎨 Rendering Strategies
+**Invalidation** is by key prefix, using `SCAN` rather than `KEYS` so it never blocks the Redis
+event loop. Writing a student clears `students:`, `dashboard:stats:` and `attendance:` together.
 
-We leverage Next.js rendering modes strategically based on data requirements:
-
-| Page              | Strategy                                  | Reason                                          |
-| ----------------- | ----------------------------------------- | ----------------------------------------------- |
-| `/textbooks`      | **SSG** (Static Site Generation)          | Content never changes, pre-render at build time |
-| `/textbooks/[id]` | **SSG** with `generateStaticParams`       | All textbook pages pre-built                    |
-| `/dashboard`      | **SSR** (Server-Side Rendering)           | Teachers need real-time student data            |
-| `/notices`        | **ISR** (Incremental Static Regeneration) | Notices update daily, revalidate every hour     |
-| `/login`          | **CSR** (Client-Side Rendering)           | Authentication happens in browser               |
+**When Redis is down**, a circuit breaker marks it unavailable for 10 seconds after a failed
+connection. Without that, every request would pay the full connect timeout before falling back —
+turning a cache outage into a site-wide slowdown, which is the opposite of what a cache is for.
+Measured locally: ~30 ms per request with Redis down, versus ~1 s without the breaker.
 
 ---
 
-## 🔐 Authentication
+## Rendering strategies
 
-### Flow
+| Route                                    | Strategy    | Why                                                                |
+| ---------------------------------------- | ----------- | ------------------------------------------------------------------ |
+| `/`                                      | Static      | Marketing copy; one HTML download and nothing else                 |
+| `/textbooks`, `/textbooks/[id]`          | SSG         | The catalogue ships in the build, so it needs no database at all   |
+| `/textbooks/[id]/chapter/[id]`           | SSG         | All 15 chapters pre-rendered — what makes the library work offline |
+| `/notices`                               | ISR (5 min) | Static-page speed, plus `revalidatePath` on publish for immediacy  |
+| `/dashboard`, `/students`, `/attendance` | Client      | Per-user, live data behind an auth gate                            |
+| `/api/*`                                 | Dynamic     | Request-scoped                                                     |
 
-1. User submits credentials → Server validates with bcrypt
-2. Server generates JWT token (expires in 7 days)
-3. Token stored in localStorage, sent with every API request
-4. Middleware verifies token on protected routes
-5. Role-based access: `ADMIN`, `TEACHER`, `STUDENT`
-
-### Supported Methods
-
-- **Email/Password:** Traditional signup with bcrypt hashing
-- **Google OAuth:** One-click sign-in with Google Identity Services
+Chapter markdown is rendered to HTML **at build time** (`src/features/textbooks/renderChapter.ts`),
+so a pupil downloads finished HTML rather than a markdown parser. The renderer is ~200 lines and
+purpose-built for the subset the chapters use; a general parser would weigh more than the content.
 
 ---
 
-## 🌐 API Documentation
+## Security
 
-### Authentication
+- **Authorisation is enforced in every route handler**, not only in the proxy. `src/proxy.ts` is a
+  first line of defence, but a proxy can be bypassed by internal rewrites, so each handler calls
+  `requireAuth` / `requireRole` itself.
+- **Roles are assigned server-side.** The signup schema has no `role` field at all, so a request
+  cannot register itself as an administrator.
+- **Login does not leak account existence** — the same message and comparable work either way.
+- **Brute-force protection counts failures, not sign-ins.** A rural school shares one connection,
+  so a limit that counted successful logins would lock out the staff room by mid-morning. Failed
+  attempts are counted per account _and_ IP (8 per 15 min) and cleared by a correct password; a
+  separate, generous per-IP ceiling (60/min) stops outright hammering.
+- **Google ID tokens are verified against Google's JWKS** — signature, issuer, audience and expiry —
+  rather than trusted from a `tokeninfo` round trip.
+- **Passwords are bcrypt-hashed** with a cost of 12.
+- **Errors are funnelled** through `handleRouteError`, so stack traces and SQL never reach a client.
+- **Identity headers are stripped** from incoming requests before the proxy sets its own.
 
-| Method | Endpoint           | Description               |
-| ------ | ------------------ | ------------------------- |
-| `POST` | `/api/auth/signup` | Register new user         |
-| `POST` | `/api/auth/login`  | Login with email/password |
-| `POST` | `/api/auth/google` | Google OAuth callback     |
+---
 
-### Students
+## Project structure
 
-| Method   | Endpoint                        | Description               |
-| -------- | ------------------------------- | ------------------------- |
-| `GET`    | `/api/students?page=1&limit=10` | List students (paginated) |
-| `POST`   | `/api/students`                 | Create new student        |
-| `GET`    | `/api/students/:id`             | Get student details       |
-| `PATCH`  | `/api/students/:id`             | Update student            |
-| `DELETE` | `/api/students/:id`             | Delete student            |
+```
+src/
+├── app/
+│   ├── (auth)/            login, signup
+│   ├── (portal)/          dashboard, students, attendance   — signed in
+│   ├── (public)/          notices, textbooks                — no account needed
+│   ├── api/               route handlers
+│   └── layout.tsx
+├── components/
+│   ├── layout/            PortalShell, PublicShell, ConnectionStatus
+│   ├── providers/         Auth, Offline, ServiceWorker
+│   └── ui/                Button, Card, Modal, Field, Badge…
+├── features/              one folder per domain
+│   ├── attendance/        register + trend
+│   ├── notices/           board, editor, category metadata
+│   ├── students/          roster, form
+│   └── textbooks/         catalogue, reader, markdown renderer
+├── lib/
+│   ├── auth/              JWT (jose), session guards, rate limiting
+│   ├── cache/             Redis client + cache-aside helpers
+│   ├── db/                Prisma client
+│   ├── http/              API client, response envelope, error funnel
+│   ├── offline/           IndexedDB store, outbox sync
+│   ├── utils/             logger, cn, useLocalStore
+│   └── validation/        Zod schemas, shared by client and server
+└── proxy.ts               edge auth gate (Next 16 renamed this from middleware)
+```
 
-### Admin
+Validation schemas live in `lib/validation` and are imported by **both** the form and the route
+handler, so the browser and the server cannot disagree about what is valid.
 
-| Method | Endpoint           | Description                   |
-| ------ | ------------------ | ----------------------------- |
-| `GET`  | `/api/admin/stats` | Dashboard statistics (cached) |
+---
 
-### Response Format
+## Data model
 
-All API responses follow a consistent envelope:
+```
+User ────────────< Notice          (author)
+  │
+  └──────────────< Attendance      (who marked it)
 
-```json
+Student ─────────< Attendance      unique (studentId, date)
+```
+
+`Attendance.date` is a `DATE` pinned to UTC midnight — attendance is a calendar fact, not an
+instant, so "today" must not shift with the server's timezone. The `(studentId, date)` unique
+constraint is what makes offline replay idempotent.
+
+Indexes: `User(role)`, `User(googleId)`, `Student(grade)`, `Student(grade, section)`,
+`Student(isActive)`, `Student(name)`, `Attendance(date)`, `Attendance(status, date)`,
+`Notice(isActive, publishedAt)`, `Notice(category)`, `Notice(isPinned)`.
+
+---
+
+## API
+
+All responses share one envelope:
+
+```jsonc
 {
   "success": true,
   "message": "Students fetched successfully",
-  "data": { ... },
-  "timestamp": "2026-01-28T10:30:00.000Z"
+  "data": {
+    /* … */
+  },
+  "timestamp": "2026-09-08T10:30:00.000Z",
 }
 ```
 
----
+| Method             | Endpoint                                | Access    |
+| ------------------ | --------------------------------------- | --------- |
+| `POST`             | `/api/auth/signup`, `/login`, `/google` | Public    |
+| `GET`              | `/api/auth/me`                          | Signed in |
+| `GET`              | `/api/health`                           | Public    |
+| `GET`              | `/api/notices`                          | Public    |
+| `POST`             | `/api/notices`                          | Staff     |
+| `PATCH` / `DELETE` | `/api/notices/:id`                      | Staff¹    |
+| `GET`              | `/api/students`                         | Signed in |
+| `POST`             | `/api/students`                         | Staff     |
+| `GET` / `PATCH`    | `/api/students/:id`                     | Staff     |
+| `DELETE`           | `/api/students/:id`                     | Admin     |
+| `GET` / `POST`     | `/api/attendance`                       | Staff     |
+| `GET`              | `/api/attendance/summary`               | Signed in |
+| `GET`              | `/api/dashboard/stats`                  | Staff     |
 
-## 🗄 Database Design
+¹ `DELETE` withdraws a notice; `?permanent=true` removes it and is admin-only. A notice board is a
+record of what was announced, so history is hidden rather than destroyed.
 
-### Entity Relationship
-
-```
-User (1) ──────────────────────────────────────
-  │  id, email, password, role, googleId
-  │
-Student (1) ────────< Attendance (Many)
-  │  id, name, grade, section     │  id, date, status, studentId
-  │
-Notice (Standalone)
-  │  id, title, content, isActive, updatedAt
-```
-
-### Performance Indexes
-
-- `User(role)` - Fast role-based queries
-- `User(googleId)` - OAuth lookups
-- `Student(grade)` - Filter by class
-- `Attendance(date)` - Today's attendance
-- `Attendance(status, date)` - Composite for "who was absent on X date"
+`GET /api/health` returns `healthy`, `degraded` (Redis down, everything still works) or `unhealthy`
+(database unreachable, `503`).
 
 ---
 
-## ⚡ Caching Strategy
+## Accessibility and low-end devices
 
-We use **Redis** with the **Cache-Aside Pattern** for the admin dashboard:
-
-1. Check Redis for `admin:stats` key
-2. **Cache HIT:** Return instantly (~10ms)
-3. **Cache MISS:** Query PostgreSQL (~200ms), store in Redis with 60s TTL
-4. **Invalidation:** When students are created/deleted, cache is cleared
-
-```typescript
-// On student create/delete
-await redis.del("admin:stats");
-```
+- Light theme only, high contrast — these screens are read in daylight classrooms.
+- 44 px minimum tap targets throughout.
+- Every form control is labelled and wired to its error with `aria-describedby`; errors announce
+  via `role="alert"`.
+- The modal traps focus, restores it on close, and closes on Escape.
+- `prefers-reduced-motion` is respected.
+- Pinch-zoom is **not** disabled.
+- The attendance chart is CSS-only — a charting library would outweigh the whole page.
+- Chapter pages have a print stylesheet, because pupils without a device are given photocopies.
 
 ---
 
-## 🐳 Docker Setup
+## Deploying
 
-### Services
+Set these on the host before the first deploy:
 
-| Container           | Image          | Port | Purpose             |
-| ------------------- | -------------- | ---- | ------------------- |
-| `rural-portal-app`  | Node 20 Alpine | 3000 | Next.js application |
-| `rural-postgres-db` | PostgreSQL 15  | 5432 | Primary database    |
-| `rural-redis-cache` | Redis 7        | 6379 | Response cache      |
+| Variable                       | Required | Notes                                                  |
+| ------------------------------ | :------: | ------------------------------------------------------ |
+| `DATABASE_URL`                 |    ✓     | Pooled connection for the app                          |
+| `DIRECT_URL`                   |    ✓     | Unpooled connection, used by migrations                |
+| `JWT_SECRET`                   |    ✓     | 32+ random characters; rotating it signs everyone out  |
+| `REDIS_URL`                    |          | Omit and the app reads from PostgreSQL every time      |
+| `GOOGLE_CLIENT_ID`             |          | Omit and the Google button is hidden                   |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` |          | Same value; needed in the browser to render the button |
 
-### Networking
-
-All services communicate via `rural_network` bridge:
-
-- App → DB: `postgres://postgres:password@db:5432/rural_school_db`
-- App → Redis: `redis://redis:6379`
-
-### Commands
+Then apply migrations against the new database — this is a separate step from
+the build, and must run before the first request:
 
 ```bash
-# Start all services
-docker-compose up --build
-
-# View logs
-docker-compose logs -f app
-
-# Stop and clean up
-docker-compose down -v
+npx prisma migrate deploy
 ```
+
+Point your uptime check at `GET /api/health`. It returns `200` for both
+`healthy` and `degraded` (Redis down but everything still working), and `503`
+only when PostgreSQL is unreachable — so a cache outage will not page anyone at
+two in the morning.
+
+**Seed data is for demonstration.** `npm run db:seed` deletes every student,
+attendance record and notice before inserting the sample school. Never run it
+against a database holding real records.
+
+**After the first deploy**, create your administrator, then remove or change the
+seeded accounts — `admin@ruraledu.in` and `teacher@ruraledu.in` have published
+passwords.
 
 ---
 
-## ✅ Code Quality
+## License
 
-### Tools Configured
-
-| Tool            | Purpose                                           |
-| --------------- | ------------------------------------------------- |
-| **TypeScript**  | Strict mode enabled, no implicit any              |
-| **ESLint**      | Next.js recommended + Core Web Vitals             |
-| **Prettier**    | Consistent formatting (double quotes, semicolons) |
-| **Husky**       | Pre-commit hooks block bad code                   |
-| **lint-staged** | Only lint changed files                           |
-
-### Pre-commit Workflow
-
-```
-git commit → Husky triggers → lint-staged runs → ESLint + Prettier → Commit succeeds/fails
-```
-
----
-
-## 📄 License
-
-This project is for educational purposes as part of a college course demonstration.
-
----
-
-## 👥 Contributors
-
-- Built with ❤️ for rural education
+Educational project.

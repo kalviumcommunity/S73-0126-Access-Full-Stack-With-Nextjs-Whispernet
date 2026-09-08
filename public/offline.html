@@ -1,136 +1,171 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Offline - RuralEdu</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background-color: #f8fafc;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    
-    .container {
-      text-align: center;
-      max-width: 400px;
-    }
-    
-    .icon {
-      width: 80px;
-      height: 80px;
-      background-color: #fef3c7;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 24px;
-    }
-    
-    .icon svg {
-      width: 40px;
-      height: 40px;
-      color: #d97706;
-    }
-    
-    h1 {
-      color: #0f172a;
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    
-    p {
-      color: #64748b;
-      font-size: 16px;
-      line-height: 1.5;
-      margin-bottom: 24px;
-    }
-    
-    .retry-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
-      background-color: #059669;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    
-    .retry-btn:hover {
-      background-color: #047857;
-    }
-    
-    .status {
-      margin-top: 24px;
-      padding: 12px;
-      background-color: #fef2f2;
-      border: 1px solid #fecaca;
-      border-radius: 8px;
-      color: #dc2626;
-      font-size: 14px;
-    }
-    
-    .online .status {
-      background-color: #f0fdf4;
-      border-color: #bbf7d0;
-      color: #16a34a;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="icon">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
-      </svg>
-    </div>
-    
-    <h1>You're Offline</h1>
-    <p>It looks like you've lost your internet connection. Don't worry - RuralEdu is designed to work offline!</p>
-    
-    <button class="retry-btn" onclick="window.location.reload()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-      </svg>
-      Try Again
-    </button>
-    
-    <div id="status" class="status">
-      Waiting for connection...
-    </div>
-  </div>
-  
-  <script>
-    function updateStatus() {
-      const statusEl = document.getElementById('status');
-      if (navigator.onLine) {
-        statusEl.textContent = '✓ Connection restored! Click retry to continue.';
-        document.body.classList.add('online');
-      } else {
-        statusEl.textContent = '✗ Still offline. Check your connection.';
-        document.body.classList.remove('online');
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline — RuralEdu</title>
+    <!--
+      Served by the service worker when a page has never been opened on this
+      device. Everything is inline: by definition there is no network to fetch
+      a stylesheet from.
+    -->
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
       }
-    }
-    
-    window.addEventListener('online', updateStatus);
-    window.addEventListener('offline', updateStatus);
-    updateStatus();
-  </script>
-</body>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        background: #f6f8f7;
+        color: #0f1e1a;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        line-height: 1.6;
+      }
+      main {
+        max-width: 30rem;
+        text-align: center;
+      }
+      .mark {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        background: #047857;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+      h1 {
+        font-size: 1.375rem;
+        font-weight: 650;
+        margin-bottom: 8px;
+      }
+      p {
+        color: #55655f;
+        font-size: 0.9375rem;
+      }
+      ul {
+        margin: 20px auto 0;
+        padding: 16px;
+        max-width: 24rem;
+        text-align: left;
+        list-style: none;
+        background: #fff;
+        border: 1px solid #dde5e2;
+        border-radius: 12px;
+        font-size: 0.875rem;
+      }
+      li + li {
+        margin-top: 10px;
+      }
+      li a {
+        color: #047857;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      li a:hover {
+        text-decoration: underline;
+      }
+      .hint {
+        display: block;
+        color: #55655f;
+        font-size: 0.8125rem;
+        font-weight: 400;
+      }
+      button {
+        margin-top: 20px;
+        padding: 11px 22px;
+        min-height: 44px;
+        font: inherit;
+        font-weight: 600;
+        color: #fff;
+        background: #047857;
+        border: 0;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #036349;
+      }
+      .status {
+        margin-top: 14px;
+        font-size: 0.8125rem;
+        color: #55655f;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="mark" aria-hidden="true">
+        <svg
+          width="30"
+          height="30"
+          viewBox="0 0 512 512"
+          fill="none"
+          stroke="#fff"
+          stroke-width="30"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M256 158c-30-22-70-32-114-30-14 0-24 10-24 23v170c0 13 10 23 24 23 44-2 84 8 114 30"
+          />
+          <path
+            d="M256 158c30-22 70-32 114-30 14 0 24 10 24 23v170c0 13-10 23-24 23-44-2-84 8-114 30"
+          />
+          <path d="M256 158v216" />
+        </svg>
+      </span>
+
+      <h1>This page is not saved on your device</h1>
+      <p>
+        You are offline, and this particular page has not been opened here
+        before. Pages you have already visited still work.
+      </p>
+
+      <ul>
+        <li>
+          <a href="/textbooks">Textbook library</a>
+          <span class="hint">Books you saved for offline reading</span>
+        </li>
+        <li>
+          <a href="/notices">Notice board</a>
+          <span class="hint">The last version that reached this device</span>
+        </li>
+        <li>
+          <a href="/dashboard">Dashboard</a>
+          <span class="hint">Attendance you marked offline is kept safely</span>
+        </li>
+      </ul>
+
+      <button type="button" onclick="location.reload()">Try again</button>
+      <p class="status" id="status">Waiting for a connection…</p>
+    </main>
+
+    <script>
+      var status = document.getElementById("status");
+
+      function render() {
+        status.textContent = navigator.onLine
+          ? "Connection restored — reloading…"
+          : "Waiting for a connection…";
+        if (navigator.onLine) setTimeout(function () {
+          location.reload();
+        }, 600);
+      }
+
+      window.addEventListener("online", render);
+      window.addEventListener("offline", render);
+      render();
+    </script>
+  </body>
 </html>

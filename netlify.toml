@@ -1,5 +1,6 @@
 [build]
-  command = "npm install && npx prisma generate && npm run build"
+  # `npm run build` already runs `prisma generate`, so it is not repeated here.
+  command = "npm ci && npm run build"
   publish = ".next"
 
 [[plugins]]
@@ -7,9 +8,23 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  NPM_FLAGS = "--legacy-peer-deps"
 
-# Functions configuration for API routes
+# API routes run as serverless functions. Prisma ships a native query engine
+# that esbuild cannot bundle, so it is loaded from node_modules at runtime.
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@prisma/client", "prisma"]
+  external_node_modules = ["@prisma/client", ".prisma"]
+  included_files = ["node_modules/.prisma/client/**"]
+
+# The service worker must never be served stale, or a device can be pinned to
+# an old build with no way to update itself.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
